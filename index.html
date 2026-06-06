@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>The Warriors — Cat Creator</title>
+<style>
+  :root {
+    --bg: #2e4a1f; --panel: #f7f2e8; --ink: #222; --accent: #f59502;
+    --radius: 18px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    margin: 0; font-family: "Comic Sans MS", "Chalkboard SE", "Marker Felt", sans-serif;
+    background: var(--bg); color: var(--ink); min-height: 100vh;
+  }
+  /* ---------- Title screen ---------- */
+  #title {
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 18px; padding: 24px; text-align: center;
+  }
+  #title h1 { color: #fff; font-size: clamp(34px, 7vw, 64px); margin: 0; text-shadow: 3px 3px 0 #1a2c10; }
+  #title p  { color: #cfe3b8; font-size: 18px; margin: 0; }
+  #gallery { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; max-width: 900px; }
+  #gallery figure { margin: 0; background: var(--panel); border-radius: var(--radius); padding: 10px; width: 150px; }
+  #gallery img { width: 100%; height: 110px; object-fit: contain; }
+  #gallery figcaption { font-size: 13px; }
+  .bigbtn {
+    font-family: inherit; font-size: 26px; padding: 16px 42px; border: none; cursor: pointer;
+    background: var(--accent); color: #fff; border-radius: 999px; box-shadow: 0 5px 0 #a86600;
+  }
+  .bigbtn:active { transform: translateY(4px); box-shadow: 0 1px 0 #a86600; }
+  /* ---------- Builder ---------- */
+  #builder { display: none; padding: 12px; gap: 12px; max-width: 1300px; margin: 0 auto; }
+  #builder.on { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr); }
+  @media (max-width: 820px) { #builder.on { grid-template-columns: 1fr; } }
+  #stagewrap { background: var(--panel); border-radius: var(--radius); padding: 10px; }
+  #stage { width: 100%; border-radius: 12px; display: block; touch-action: manipulation; }
+  #namebar { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  #namebar input, #namebar select {
+    font-family: inherit; font-size: 18px; padding: 10px 14px; border-radius: 12px;
+    border: 3px solid #ddd0b8; background: #fff; flex: 1; min-width: 120px;
+  }
+  #panel { background: var(--panel); border-radius: var(--radius); padding: 12px; }
+  .tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .tab {
+    font-family: inherit; font-size: 15px; padding: 9px 14px; border: none; border-radius: 999px;
+    background: #e7dcc4; cursor: pointer;
+  }
+  .tab.on { background: var(--accent); color: #fff; }
+  .grid { display: flex; flex-wrap: wrap; gap: 10px; }
+  .part {
+    width: 86px; height: 72px; border: 3px solid #ddd0b8; border-radius: 14px; background: #fff;
+    cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center;
+  }
+  .part img { max-width: 100%; max-height: 100%; }
+  .part.on { border-color: var(--accent); background: #fff3df; }
+  .swatch {
+    width: 46px; height: 46px; border-radius: 50%; border: 4px solid #fff; cursor: pointer;
+    box-shadow: 0 0 0 2px #c9bb9e;
+  }
+  .swatch.on { box-shadow: 0 0 0 4px var(--accent); }
+  h3 { margin: 14px 0 8px; font-size: 16px; }
+  h3 .hint { font-weight: normal; font-size: 13px; color: #7a6f58; }
+  .widthrow { display: flex; align-items: center; gap: 14px; }
+  .pm {
+    font-size: 34px; width: 58px; height: 58px; border-radius: 50%; border: none; cursor: pointer;
+    color: #fff; font-family: inherit; line-height: 1;
+  }
+  #plus  { background: #58d11c; box-shadow: 0 4px 0 #3d9510; }
+  #minus { background: #fb4f4f; box-shadow: 0 4px 0 #b13232; }
+  .pm:active { transform: translateY(3px); box-shadow: none; }
+  .actions { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
+  .actions button {
+    font-family: inherit; font-size: 17px; padding: 12px 20px; border: none;
+    border-radius: 999px; cursor: pointer; background: #4d6c33; color: #fff;
+  }
+  .actions #save { background: var(--accent); }
+</style>
+</head>
+<body>
+
+<div id="title">
+  <h1>🐾 The Warriors</h1>
+  <p>art by the warrior artist herself</p>
+  <div id="gallery"></div>
+  <button class="bigbtn" id="start">Make your warrior!</button>
+</div>
+
+<div id="builder">
+  <div id="stagewrap">
+    <canvas id="stage" width="1366" height="1024"></canvas>
+    <div id="namebar">
+      <input id="catname" maxlength="20" placeholder="Name your cat…">
+      <select id="role"></select>
+    </div>
+  </div>
+  <div id="panel">
+    <div class="tabs" id="tabs"></div>
+    <div class="grid" id="parts"></div>
+    <h3>Fur color</h3><div class="grid" id="furSw"></div>
+    <h3>Eye colors <span class="hint">(pick 1 or two!)</span></h3><div class="grid" id="eyeSw"></div>
+    <h3>Pattern color <span class="hint">(pick 1 or more!)</span></h3><div class="grid" id="patSw"></div>
+    <h3>Width <span class="hint">(tap + to add, − to take away)</span></h3>
+    <div class="widthrow">
+      <button class="pm" id="minus">−</button>
+      <button class="pm" id="plus">+</button>
+    </div>
+    <h3>Scene</h3><div class="grid" id="scenes"></div>
+    <div class="actions">
+      <button id="random">Surprise me!</button>
+      <button id="save">Save my cat</button>
+      <button id="back">Title</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let M, IMG = {};                                  // manifest + image cache
+const state = {
+  ears: "ears_pointed", eyes: "eyes_calm", cheeks: "cheeks_smooth",
+  tail: "tail_curved", pattern: "pattern_stripes",
+  fur: "#f59502", eyeColors: ["#17f288"], patColors: ["#513b23"],
+  width: 1, name: "", role: "warrior", scene: "hill_mouse", tab: "ears"
+};
+const TABS = [["ears","Ears"],["eyes","Eyes"],["cheeks","Cheek fur"],["tail","Tail"],["pattern","Pattern"]];
+
+const load = src => new Promise(res => {
+  if (IMG[src]) return res(IMG[src]);
+  const i = new Image(); i.onload = () => { IMG[src] = i; res(i); }; i.src = src;
+});
+
+async function boot() {
+  M = await (await fetch("manifest.json")).json();
+  // title gallery
+  const g = document.getElementById("gallery");
+  M.gallery.forEach(c => {
+    const f = document.createElement("figure");
+    f.innerHTML = `<img src="${c.src}" alt=""><figcaption>${c.name}</figcaption>`;
+    g.appendChild(f);
+  });
+  // roles
+  const sel = document.getElementById("role");
+  M.roles.forEach(r => sel.add(new Option(r, r)));
+  sel.value = state.role;
+  buildPanel();
+  await draw();
+}
+
+function buildPanel() {
+  // tabs
+  const tabs = document.getElementById("tabs"); tabs.innerHTML = "";
+  TABS.forEach(([id, label]) => {
+    const b = document.createElement("button");
+    b.className = "tab" + (state.tab === id ? " on" : ""); b.textContent = label;
+    b.onclick = () => { state.tab = id; buildPanel(); };
+    tabs.appendChild(b);
+  });
+  // parts for current tab (+ none option where it makes sense)
+  const wrap = document.getElementById("parts"); wrap.innerHTML = "";
+  const cat = state.tab;
+  M.categories[cat].forEach(p => {
+    const d = document.createElement("button");
+    d.className = "part" + (state[cat] === p.id ? " on" : "");
+    d.innerHTML = `<img src="${p.src}" alt="${p.name}" title="${p.name}">`;
+    d.onclick = () => { state[cat] = p.id; buildPanel(); draw(); };
+    wrap.appendChild(d);
+  });
+  if (cat === "pattern" || cat === "cheeks" || cat === "tail") {
+    const d = document.createElement("button");
+    d.className = "part" + (state[cat] === null ? " on" : "");
+    d.innerHTML = `<img src="${M.ui.noneRed}" alt="none" title="none">`;
+    d.onclick = () => { state[cat] = null; buildPanel(); draw(); };
+    wrap.appendChild(d);
+  }
+  // swatches
+  swatches("furSw", M.palettes.fur, c => state.fur === c, c => { state.fur = c; });
+  swatches("eyeSw", M.palettes.eye, c => state.eyeColors.includes(c), c => {
+    const i = state.eyeColors.indexOf(c);
+    if (i >= 0) { if (state.eyeColors.length > 1) state.eyeColors.splice(i, 1); }
+    else { state.eyeColors.push(c); if (state.eyeColors.length > 2) state.eyeColors.shift(); }
+  });
+  swatches("patSw", M.palettes.pattern, c => state.patColors.includes(c), c => {
+    const i = state.patColors.indexOf(c);
+    if (i >= 0) { if (state.patColors.length > 1) state.patColors.splice(i, 1); }
+    else state.patColors.push(c);
+  });
+  // scenes
+  const sc = document.getElementById("scenes"); sc.innerHTML = "";
+  M.backgrounds.forEach(b => {
+    const d = document.createElement("button");
+    d.className = "part" + (state.scene === b.id ? " on" : "");
+    d.innerHTML = `<img src="${b.src}" alt="${b.name}" title="${b.name}">`;
+    d.onclick = () => { state.scene = b.id; buildPanel(); draw(); };
+    sc.appendChild(d);
+  });
+}
+
+function swatches(id, colors, isOn, toggle) {
+  const el = document.getElementById(id); el.innerHTML = "";
+  colors.forEach(c => {
+    const s = document.createElement("button");
+    s.className = "swatch" + (isOn(c) ? " on" : "");
+    s.style.background = c;
+    s.onclick = () => { toggle(c); buildPanel(); draw(); };
+    el.appendChild(s);
+  });
+}
+
+function tinted(img, color, w, h) {
+  const c = document.createElement("canvas"); c.width = w; c.height = h;
+  const x = c.getContext("2d");
+  x.drawImage(img, 0, 0, w, h);
+  x.globalCompositeOperation = "source-in";
+  x.fillStyle = color; x.fillRect(0, 0, w, h);
+  return c;
+}
+
+function bodyPath(x) {  // draws the sitting-cat silhouette into ctx x
+  x.beginPath();        // chest / body
+  const r = 200;
+  x.moveTo(430 + r, 640);
+  x.arcTo(890, 640, 890, 1024, r); x.lineTo(890, 1024); x.lineTo(430, 1024);
+  x.arcTo(430, 640, 430 + r, 640, r); x.closePath(); x.fill();
+  x.beginPath();        // head
+  x.ellipse(650, 545, 320, 275, 0, 0, Math.PI * 2); x.fill();
+  // ear fill triangles (under the line art)
+  x.beginPath(); x.moveTo(395, 420); x.lineTo(455, 195); x.lineTo(610, 330); x.closePath(); x.fill();
+  x.beginPath(); x.moveTo(700, 320); x.lineTo(845, 185); x.lineTo(905, 415); x.closePath(); x.fill();
+}
+
+async function draw() {
+  const cv = document.getElementById("stage"), ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height;
+  // background
+  const bg = M.backgrounds.find(b => b.id === state.scene);
+  ctx.clearRect(0, 0, W, H);
+  if (bg) ctx.drawImage(await load(bg.src), 0, 0, W, H);
+  else { ctx.fillStyle = "#bfe3f7"; ctx.fillRect(0, 0, W, H); }
+
+  // --- cat group (horizontally scalable) ---
+  const cat = document.createElement("canvas"); cat.width = W; cat.height = H;
+  const c = cat.getContext("2d");
+
+  // tail (behind body)
+  if (state.tail) {
+    const t = M.categories.tail.find(p => p.id === state.tail);
+    const img = await load(t.src);
+    const tail = tinted(img, "#000", W, H);          // line art stays dark
+    c.save(); c.translate(t.offset[0], t.offset[1]);
+    c.drawImage(img, 0, 0, W, H); c.restore();
+  }
+  // body fill
+  const body = document.createElement("canvas"); body.width = W; body.height = H;
+  const bx = body.getContext("2d");
+  bx.fillStyle = state.fur; bodyPath(bx);
+  // pattern clipped to body
+  if (state.pattern) {
+    const p = M.categories.pattern.find(q => q.id === state.pattern);
+    const img = await load(p.src);
+    state.patColors.forEach((col, i) => {
+      const t = tinted(img, col, W, H);
+      bx.save();
+      bx.globalCompositeOperation = "source-atop";
+      bx.globalAlpha = 0.9;
+      if (i > 0) bx.translate(40 * i, 60 * i);       // extra colors offset a bit
+      bx.drawImage(t, 0, 0);
+      bx.restore();
+    });
+  }
+  c.drawImage(body, 0, 0);
+  // eye color under line art
+  const anchors = M.eyeAnchors[state.eyes] || [];
+  anchors.forEach((a, i) => {
+    const col = state.eyeColors[i % state.eyeColors.length];
+    c.save(); c.fillStyle = col;
+    c.beginPath(); c.ellipse(a[0], a[1], a[2] / 2, a[3] / 2, 0, 0, Math.PI * 2);
+    c.fill(); c.restore();
+  });
+  // line art: ears, eyes, cheeks
+  for (const k of ["ears", "eyes", "cheeks"]) {
+    if (!state[k]) continue;
+    const p = M.categories[k].find(q => q.id === state[k]);
+    c.drawImage(await load(p.src), 0, 0, W, H);
+  }
+  // composite cat with width scaling around its center
+  ctx.save();
+  ctx.translate(650 * (1 - state.width), 0);
+  ctx.scale(state.width, 1);
+  ctx.drawImage(cat, 0, 0);
+  ctx.restore();
+
+  // name banner (her style: black bar, white writing)
+  const name = state.name.trim();
+  if (name) {
+    const label = name + "  •  " + state.role;
+    ctx.font = "52px 'Comic Sans MS', 'Chalkboard SE', sans-serif";
+    const w = ctx.measureText(label).width + 70;
+    ctx.fillStyle = "rgba(10,10,10,.92)";
+    rounded(ctx, (W - w) / 2, H - 110, w, 80, 18); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.fillText(label, W / 2, H - 68);
+  }
+}
+
+function rounded(x, a, b, w, h, r) {
+  x.beginPath(); x.moveTo(a + r, b);
+  x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r);
+  x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath();
+}
+
+// ---------- controls ----------
+document.getElementById("start").onclick = () => {
+  document.getElementById("title").style.display = "none";
+  document.getElementById("builder").classList.add("on");
+  draw();
+};
+document.getElementById("back").onclick = () => {
+  document.getElementById("builder").classList.remove("on");
+  document.getElementById("title").style.display = "flex";
+};
+document.getElementById("plus").onclick  = () => { state.width = Math.min(1.45, state.width + 0.08); draw(); };
+document.getElementById("minus").onclick = () => { state.width = Math.max(0.65, state.width - 0.08); draw(); };
+document.getElementById("catname").oninput = e => { state.name = e.target.value; draw(); };
+document.getElementById("role").onchange   = e => { state.role = e.target.value; draw(); };
+document.getElementById("random").onclick = () => {
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  for (const [k] of TABS) {
+    const opts = M.categories[k].map(p => p.id);
+    if (k === "pattern" && Math.random() < 0.2) state[k] = null;
+    else state[k] = pick(opts);
+  }
+  state.fur = pick(M.palettes.fur);
+  state.eyeColors = Math.random() < 0.3
+    ? [pick(M.palettes.eye), pick(M.palettes.eye)] : [pick(M.palettes.eye)];
+  state.patColors = [pick(M.palettes.pattern)];
+  state.width = 0.75 + Math.random() * 0.6;
+  buildPanel(); draw();
+};
+document.getElementById("save").onclick = async () => {
+  await draw();
+  const a = document.createElement("a");
+  a.download = (state.name.trim() || "my-warrior") + ".png";
+  a.href = document.getElementById("stage").toDataURL("image/png");
+  a.click();
+};
+
+boot();
+</script>
+</body>
+</html>

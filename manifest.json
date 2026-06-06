@@ -1,0 +1,61 @@
+{
+  "canvas": { "w": 1366, "h": 1024 },
+  "categories": {
+    "ears": [
+      { "id": "ears_pointed", "name": "Pointed", "src": "assets/parts/ears/ears_pointed.png" },
+      { "id": "ears_tall",    "name": "Tall",    "src": "assets/parts/ears/ears_tall.png" },
+      { "id": "ears_notched", "name": "Notched", "src": "assets/parts/ears/ears_notched.png" },
+      { "id": "ears_fluffy",  "name": "Fluffy",  "src": "assets/parts/ears/ears_fluffy.png" }
+    ],
+    "eyes": [
+      { "id": "eyes_calm",  "name": "Calm",  "src": "assets/parts/eyes/eyes_calm.png" },
+      { "id": "eyes_slits", "name": "Slits", "src": "assets/parts/eyes/eyes_slits.png" }
+    ],
+    "cheeks": [
+      { "id": "cheeks_smooth", "name": "Smooth",   "src": "assets/parts/cheeks/cheeks_smooth.png" },
+      { "id": "cheeks_wavy",   "name": "Wavy",     "src": "assets/parts/cheeks/cheeks_wavy.png" },
+      { "id": "cheeks_curly",  "name": "Curly",    "src": "assets/parts/cheeks/cheeks_curly.png" },
+      { "id": "cheeks_spiky",  "name": "Spiky",    "src": "assets/parts/cheeks/cheeks_spiky.png" },
+      { "id": "cheeks_jagged", "name": "Jagged",   "src": "assets/parts/cheeks/cheeks_jagged.png" },
+      { "id": "cheeks_thin",   "name": "Thin",     "src": "assets/parts/cheeks/cheeks_thin.png" },
+      { "id": "cheeks_bolt",   "name": "Lightning","src": "assets/parts/cheeks/cheeks_bolt.png" }
+    ],
+    "tail": [
+      { "id": "tail_curved", "name": "Curved", "src": "assets/parts/tails/tail_curved.png", "offset": [-320, 0] },
+      { "id": "tail_plume",  "name": "Plume",  "src": "assets/parts/tails/tail_plume.png",  "offset": [-360, 0] },
+      { "id": "tail_sleek",  "name": "Sleek",  "src": "assets/parts/tails/tail_sleek.png",  "offset": [-380, 60] },
+      { "id": "tail_thick",  "name": "Thick",  "src": "assets/parts/tails/tail_thick.png",  "offset": [-340, 0] }
+    ],
+    "pattern": [
+      { "id": "pattern_stripes",  "name": "Stripes",  "src": "assets/parts/patterns/pattern_stripes.png" },
+      { "id": "pattern_spots",    "name": "Spots",    "src": "assets/parts/patterns/pattern_spots.png" },
+      { "id": "pattern_speckles", "name": "Speckles", "src": "assets/parts/patterns/pattern_speckles.png" }
+    ]
+  },
+  "palettes": {
+    "fur":     ["#f59502", "#9d6106", "#54380d", "#000000", "#faf5ea", "#7b6d62", "#ddb16d", "#b89458", "#835c40"],
+    "eye":     ["#68c0f6", "#27a5f3", "#3860f8", "#17f288", "#64cc94", "#528e6d", "#cea455", "#9e8145", "#5e4b2a", "#f6e251"],
+    "pattern": ["#f88728", "#443a2b", "#bd8d62", "#513b23", "#d09c65"]
+  },
+  "roles": ["kittypet", "leader", "deputy", "medicine cat", "rogue", "loner", "kit", "elder", "apprentice", "warrior", "mentor"],
+  "backgrounds": [
+    { "id": "hill_mouse", "name": "Hill with mouse", "src": "assets/backgrounds/hill_mouse.jpg" },
+    { "id": "camp_dens",  "name": "Camp",            "src": "assets/backgrounds/camp_dens.jpg" },
+    { "id": "pond",       "name": "Pond",            "src": "assets/backgrounds/pond.jpg" }
+  ],
+  "eyeAnchors": {
+    "eyes_calm":  [[502, 495, 170, 95], [881, 437, 170, 95]],
+    "eyes_slits": [[423, 509, 140, 80], [724, 529, 140, 80]]
+  },
+  "ui": {
+    "noneRed":    "assets/ui/none_red.png",
+    "noneOrange": "assets/ui/none_orange.png"
+  },
+  "gallery": [
+    { "name": "Rusty / Firestar", "src": "assets/characters/firestar.png" },
+    { "name": "Bluestar",         "src": "assets/characters/bluestar.png" },
+    { "name": "Scarred tabby",    "src": "assets/characters/tabby_scarred.png" },
+    { "name": "Yellow cat",       "src": "assets/characters/cat_yellow.png" },
+    { "name": "Needletail & Violetshine", "src": "assets/characters/needletail_violetshine.png" }
+  ]
+}
