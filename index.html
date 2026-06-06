@@ -217,16 +217,26 @@ function tinted(img, color, w, h) {
 }
 
 function bodyPath(x) {  // draws the sitting-cat silhouette into ctx x
-  x.beginPath();        // chest / body
-  const r = 200;
-  x.moveTo(430 + r, 640);
-  x.arcTo(890, 640, 890, 1024, r); x.lineTo(890, 1024); x.lineTo(430, 1024);
-  x.arcTo(430, 640, 430 + r, 640, r); x.closePath(); x.fill();
-  x.beginPath();        // head
-  x.ellipse(650, 545, 320, 275, 0, 0, Math.PI * 2); x.fill();
-  // ear fill triangles (under the line art)
-  x.beginPath(); x.moveTo(395, 420); x.lineTo(455, 195); x.lineTo(610, 330); x.closePath(); x.fill();
-  x.beginPath(); x.moveTo(700, 320); x.lineTo(845, 185); x.lineTo(905, 415); x.closePath(); x.fill();
+  // ear fill (under the line art) — shaped per ear style so the color stays
+  // inside the hand-drawn ear outline (see manifest.earFill)
+  const ears = (M.earFill && M.earFill[state.ears]) || [];
+  ears.forEach(tri => {
+    x.beginPath(); x.moveTo(tri[0][0], tri[0][1]);
+    for (let i = 1; i < tri.length; i++) x.lineTo(tri[i][0], tri[i][1]);
+    x.closePath(); x.fill();
+  });
+  // sitting-cat silhouette: the sides follow the cheek-fur lines, then flare
+  // out to a seated base, so the chosen cheek part reads as the body outline
+  x.beginPath();
+  x.moveTo(660, 300);
+  x.bezierCurveTo(885, 300, 968, 400, 962, 490);     // right head -> cheek
+  x.bezierCurveTo(958, 620, 952, 720, 950, 780);     // right cheek edge
+  x.bezierCurveTo(1000, 860, 1045, 960, 1045, 1024); // flare to seated base
+  x.lineTo(285, 1024);
+  x.bezierCurveTo(285, 960, 318, 860, 360, 780);     // left shoulder
+  x.bezierCurveTo(356, 720, 352, 620, 352, 490);     // left cheek edge
+  x.bezierCurveTo(346, 400, 435, 300, 660, 300);     // left head
+  x.closePath(); x.fill();
 }
 
 async function draw() {
