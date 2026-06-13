@@ -26,9 +26,16 @@ Layer order (bottom → top):
 
 1. Background scene (`assets/backgrounds/`)
 2. Tail (line art, behind body, offset from manifest)
-3. Body fill — a vector "sitting cat" silhouette drawn in code (head ellipse around
-   cx 650 / cy 575, chest blob below), filled with the chosen fur color.
-   Body width scales horizontally around the center per the +/− control.
+3. Body fill — a vector "sitting cat" silhouette drawn in code, filled with the
+   chosen fur color. **The silhouette sides trace the chosen cheek's actual
+   hand-drawn line** (`manifest.json → bodyShape`, one left/right point list per
+   cheek style) so the fur fills exactly up to the line and every part reads as
+   one connected outline. The head crown is stretched to reach the ears (so an
+   ear never floats), and both sides flare to a seated base. Everything — parts
+   and fill — scales together horizontally per the +/− width control, so the
+   lines stay touching at any size. The `bodyShape` numbers were measured from
+   the PNGs with `tools/measure_cheeks.js`; re-run it (needs `npm i canvas`) and
+   eyeball the result with `tools/render_test.js` after adding/redrawing cheeks.
 4. Pattern layer — chosen pattern PNG, tinted with the chosen pattern color(s),
    clipped to the body silhouette (`source-in` compositing).
 5. Eye color — soft ellipses under the eye line art; positions per eye style in

@@ -273,23 +273,41 @@ function tinted(img, color, w, h) {
 function bodyPath(x) {  // draws the sitting-cat silhouette into ctx x
   // ear fill (under the line art) — shaped per ear style so the color stays
   // inside the hand-drawn ear outline (see manifest.earFill)
-  const ears = (M.earFill && M.earFill[state.ears]) || [];
-  ears.forEach(tri => {
+  const tris = (M.earFill && M.earFill[state.ears]) || [];
+  tris.forEach(tri => {
     x.beginPath(); x.moveTo(tri[0][0], tri[0][1]);
     for (let i = 1; i < tri.length; i++) x.lineTo(tri[i][0], tri[i][1]);
     x.closePath(); x.fill();
   });
-  // sitting-cat silhouette: the sides follow the cheek-fur lines, then flare
-  // out to a seated base, so the chosen cheek part reads as the body outline
+  // sitting-cat silhouette: the sides trace the chosen cheek's hand-drawn line
+  // (manifest.bodyShape, measured from the art) so fur fills exactly to the
+  // line; the head crown is also stretched to reach the ears so they never
+  // float, then both sides flare out to a seated base.
+  const shape = (M.bodyShape && (M.bodyShape[state.cheeks] || M.bodyShape.cheeks_smooth));
+  if (!shape) return;
+  const earBase = tri => {                          // base = the two non-apex points
+    const s = [...tri].sort((a, b) => a[1] - b[1]);
+    return { xs: [s[1][0], s[2][0]], y: (s[1][1] + s[2][1]) / 2 };
+  };
+  const side = (pts, isRight) => {
+    if (tris.length < 2) return pts;
+    const b = earBase(isRight ? tris[1] : tris[0]);
+    const earX = isRight ? Math.max(...b.xs) : Math.min(...b.xs);
+    const reaches = isRight ? pts[0][0] >= earX : pts[0][0] <= earX;
+    if (reaches) return pts;                        // head already meets the ear
+    return [[earX, b.y], ...pts.filter(p => p[1] > b.y + 10)];
+  };
+  const L = side(shape.left, false), R = side(shape.right, true);
+  const lt = L[0], rt = R[0], lb = L[L.length - 1], rb = R[R.length - 1];
+  const crownY = Math.min(lt[1], rt[1]) - 95;
   x.beginPath();
-  x.moveTo(660, 300);
-  x.bezierCurveTo(885, 300, 968, 400, 962, 490);     // right head -> cheek
-  x.bezierCurveTo(958, 620, 952, 720, 950, 780);     // right cheek edge
-  x.bezierCurveTo(1000, 860, 1045, 960, 1045, 1024); // flare to seated base
-  x.lineTo(285, 1024);
-  x.bezierCurveTo(285, 960, 318, 860, 360, 780);     // left shoulder
-  x.bezierCurveTo(356, 720, 352, 620, 352, 490);     // left cheek edge
-  x.bezierCurveTo(346, 400, 435, 300, 660, 300);     // left head
+  x.moveTo(lt[0], lt[1]);
+  x.bezierCurveTo(lt[0] + 165, crownY, rt[0] - 165, crownY, rt[0], rt[1]);      // crown
+  for (let i = 1; i < R.length; i++) x.lineTo(R[i][0], R[i][1]);                // right cheek
+  x.bezierCurveTo(rb[0] + 95, rb[1] + 95, rb[0] + 100, 1024, rb[0] + 90, 1024); // right flare
+  x.lineTo(lb[0] - 90, 1024);                                                   // seated base
+  x.bezierCurveTo(lb[0] - 100, 1024, lb[0] - 95, lb[1] + 95, lb[0], lb[1]);     // left flare
+  for (let i = L.length - 2; i >= 0; i--) x.lineTo(L[i][0], L[i][1]);           // left cheek up
   x.closePath(); x.fill();
 }
 
