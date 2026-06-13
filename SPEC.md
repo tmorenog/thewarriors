@@ -43,8 +43,11 @@ Layer order (bottom → top):
   7 cheek-fur styles, 4 tails, 3 patterns (stripes / spots / speckles).
 - `assets/backgrounds/` — 3 scenes: grassy hill with mouse, camp with dens, pond.
 - `assets/characters/` — her finished cats: Rusty/Firestar (incl. a **blink frame**
-  `firestar_blink.png`), Bluestar, a scarred brown tabby, a yellow cat, and
-  Needletail & Violetshine (incl. a **talking frame** `..._talk.png`).
+  `firestar_blink.png`), Bluestar, **Tigerstar** (the scarred brown tabby, with a
+  talking frame `tabby_scarred_alt.png`), **Lionheart** (the yellow cat, with a
+  talking frame `cat_yellow_alt.png`), and Needletail & Violetshine (incl. a
+  **talking frame** `..._talk.png`). Tigerstar & Lionheart are the Clan cats you
+  can **talk to** after building (see `manifest.json → clan`).
 - `assets/ui/` — red and orange "none" symbols.
 - `assets/reference/` — her original menu sheets and notes (the design source of truth).
 - `manifest.json` — every part, palette hex code, role, and anchor the game uses.
@@ -56,7 +59,9 @@ Layer order (bottom → top):
 Title screen (gallery of her finished cats) → builder screen:
 canvas preview + part tabs (Ears, Eyes, Cheek fur, Tail, Pattern) + color swatches
 (fur / eyes ×2 / pattern) + width +/− + name input + role picker + scene picker +
-Random button + Save (downloads PNG). Touch-first, iPad-friendly, no external libraries.
+Random button + Save (downloads PNG) + **Meet the Clan** (talk to Lionheart &
+Tigerstar; their portraits animate base↔alt frame while they speak, and their
+lines use your cat's name and role). Touch-first, iPad-friendly, no external libraries.
 
 ## Roadmap ideas (build next, in rough order)
 

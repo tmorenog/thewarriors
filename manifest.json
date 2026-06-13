@@ -60,8 +60,36 @@
   "gallery": [
     { "name": "Rusty / Firestar", "src": "assets/characters/firestar.png" },
     { "name": "Bluestar",         "src": "assets/characters/bluestar.png" },
-    { "name": "Scarred tabby",    "src": "assets/characters/tabby_scarred.png" },
-    { "name": "Yellow cat",       "src": "assets/characters/cat_yellow.png" },
+    { "name": "Tigerstar",        "src": "assets/characters/tabby_scarred.png" },
+    { "name": "Lionheart",        "src": "assets/characters/cat_yellow.png" },
     { "name": "Needletail & Violetshine", "src": "assets/characters/needletail_violetshine.png" }
+  ],
+  "clan": [
+    {
+      "id": "lionheart",
+      "name": "Lionheart",
+      "title": "ThunderClan deputy",
+      "img": "assets/characters/cat_yellow.png",
+      "talkImg": "assets/characters/cat_yellow_alt.png",
+      "lines": [
+        "Welcome to ThunderClan, {name}! I am Lionheart, the deputy.",
+        "A {role} like you must be brave, loyal, and quick on your paws.",
+        "Hunt well, fight only when you must, and always protect your Clanmates.",
+        "StarClan lights your path, {name}. Make the warrior code proud!"
+      ]
+    },
+    {
+      "id": "tigerstar",
+      "name": "Tigerstar",
+      "title": "dark warrior",
+      "img": "assets/characters/tabby_scarred.png",
+      "talkImg": "assets/characters/tabby_scarred_alt.png",
+      "lines": [
+        "So... you're the new {role}, {name}? Hmph.",
+        "In this forest, power is the only thing that truly matters.",
+        "Stick with me and you could be far more than just a {role}.",
+        "Remember my name, {name}. Tigerstar always gets what he wants."
+      ]
+    }
   ]
 }

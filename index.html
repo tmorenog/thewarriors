@@ -76,6 +76,41 @@
     border-radius: 999px; cursor: pointer; background: #4d6c33; color: #fff;
   }
   .actions #save { background: var(--accent); }
+  .actions #meet { background: #8a5a2b; }
+  /* ---------- Talk to the Clan ---------- */
+  #talk {
+    display: none; position: fixed; inset: 0; background: rgba(20, 30, 14, .92);
+    z-index: 10; padding: 18px; overflow-y: auto;
+  }
+  #talk.on { display: flex; align-items: center; justify-content: center; }
+  #talkcard {
+    background: var(--panel); border-radius: var(--radius); padding: 18px;
+    width: 100%; max-width: 720px;
+  }
+  #talkcard h2 { margin: 0 0 12px; text-align: center; color: #2e4a1f; }
+  #speakers { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .speaker {
+    font-family: inherit; cursor: pointer; background: #fff; border: 3px solid #ddd0b8;
+    border-radius: var(--radius); padding: 8px; width: 150px; text-align: center;
+  }
+  .speaker.on { border-color: var(--accent); background: #fff3df; }
+  .speaker img { width: 100%; height: 110px; object-fit: contain; }
+  .speaker .nm { font-size: 16px; font-weight: bold; }
+  .speaker .ttl { font-size: 12px; color: #7a6f58; }
+  #convo { display: none; gap: 14px; margin-top: 14px; align-items: stretch; }
+  #convo.on { display: flex; flex-wrap: wrap; }
+  #portraitwrap {
+    flex: 1; min-width: 200px; background: #eadfca; border-radius: 14px;
+    display: flex; align-items: center; justify-content: center; padding: 8px;
+  }
+  #portrait { width: 100%; max-height: 280px; object-fit: contain; }
+  #bubble {
+    flex: 1.2; min-width: 220px; display: flex; flex-direction: column;
+    background: #fff; border: 3px solid #ddd0b8; border-radius: 14px; padding: 14px;
+  }
+  #speakername { font-weight: bold; font-size: 18px; color: var(--accent); }
+  #line { font-size: 20px; line-height: 1.4; flex: 1; }
+  #nextline { font-size: 18px; padding: 12px 30px; align-self: flex-start; }
 </style>
 </head>
 <body>
@@ -109,8 +144,27 @@
     <h3>Scene</h3><div class="grid" id="scenes"></div>
     <div class="actions">
       <button id="random">Surprise me!</button>
+      <button id="meet">Meet the Clan</button>
       <button id="save">Save my cat</button>
       <button id="back">Title</button>
+    </div>
+  </div>
+</div>
+
+<div id="talk">
+  <div id="talkcard">
+    <h2 id="talkheading">Meet the Clan</h2>
+    <div id="speakers"></div>
+    <div id="convo">
+      <div id="portraitwrap"><img id="portrait" alt=""></div>
+      <div id="bubble">
+        <div id="speakername"></div>
+        <p id="line"></p>
+        <button class="bigbtn" id="nextline">Next</button>
+      </div>
+    </div>
+    <div class="actions" id="talkactions">
+      <button id="talkback">Back to building</button>
     </div>
   </div>
 </div>
@@ -255,8 +309,7 @@ async function draw() {
   // tail (behind body)
   if (state.tail) {
     const t = M.categories.tail.find(p => p.id === state.tail);
-    const img = await load(t.src);
-    const tail = tinted(img, "#000", W, H);          // line art stays dark
+    const img = await load(t.src);                   // tail PNG is already line art
     c.save(); c.translate(t.offset[0], t.offset[1]);
     c.drawImage(img, 0, 0, W, H); c.restore();
   }
@@ -353,6 +406,82 @@ document.getElementById("save").onclick = async () => {
   a.download = (state.name.trim() || "my-warrior") + ".png";
   a.href = document.getElementById("stage").toDataURL("image/png");
   a.click();
+};
+
+// ---------- talk to the Clan ----------
+const talk = { speaker: null, line: 0, timer: null };
+
+function fill(text) {                                 // swap in the player's cat
+  return text
+    .replaceAll("{name}", state.name.trim() || "warrior")
+    .replaceAll("{role}", state.role);
+}
+
+function buildSpeakers() {
+  const wrap = document.getElementById("speakers"); wrap.innerHTML = "";
+  (M.clan || []).forEach(cat => {
+    const b = document.createElement("button");
+    b.className = "speaker" + (talk.speaker === cat.id ? " on" : "");
+    b.innerHTML = `<img src="${cat.img}" alt="${cat.name}">` +
+                  `<div class="nm">${cat.name}</div><div class="ttl">${cat.title}</div>`;
+    b.onclick = () => startConvo(cat.id);
+    wrap.appendChild(b);
+  });
+}
+
+function startConvo(id) {
+  stopAnim();
+  talk.speaker = id; talk.line = 0;
+  buildSpeakers();
+  document.getElementById("convo").classList.add("on");
+  showLine();
+  startAnim();
+}
+
+function speakerData() { return (M.clan || []).find(c => c.id === talk.speaker); }
+
+function showLine() {
+  const cat = speakerData(); if (!cat) return;
+  document.getElementById("speakername").textContent = cat.name + " says:";
+  document.getElementById("line").textContent = fill(cat.lines[talk.line]);
+  const last = talk.line >= cat.lines.length - 1;
+  document.getElementById("nextline").textContent = last ? "Talk to someone else" : "Next";
+}
+
+function startAnim() {                                // mouth open/closed while talking
+  const cat = speakerData(); if (!cat || !cat.talkImg) return;
+  const portrait = document.getElementById("portrait");
+  let open = false;
+  portrait.src = cat.img;
+  talk.timer = setInterval(() => {
+    open = !open;
+    portrait.src = open ? cat.talkImg : cat.img;
+  }, 320);
+}
+function stopAnim() { if (talk.timer) { clearInterval(talk.timer); talk.timer = null; } }
+
+document.getElementById("nextline").onclick = () => {
+  const cat = speakerData(); if (!cat) return;
+  if (talk.line < cat.lines.length - 1) { talk.line++; showLine(); }
+  else {                                             // end of this chat -> pick again
+    stopAnim();
+    talk.speaker = null;
+    document.getElementById("convo").classList.remove("on");
+    buildSpeakers();
+  }
+};
+
+document.getElementById("meet").onclick = () => {
+  document.getElementById("talkheading").textContent =
+    "Who do you want to talk to, " + (state.name.trim() || "warrior") + "?";
+  talk.speaker = null;
+  document.getElementById("convo").classList.remove("on");
+  buildSpeakers();
+  document.getElementById("talk").classList.add("on");
+};
+document.getElementById("talkback").onclick = () => {
+  stopAnim();
+  document.getElementById("talk").classList.remove("on");
 };
 
 boot();
