@@ -64,8 +64,10 @@ Random button + Save (downloads PNG). Touch-first, iPad-friendly, no external li
    Needletail/Violetshine talk frame on a timer; do the same for created cats by
    animating the eye layer.
 2. **Save/load den** — store created cats in localStorage; gallery of saved warriors.
-3. **Prey chase mini-game** — the hill_mouse background already has a mouse; tap it
-   before it escapes, your cat pounces.
+3. ~~**Prey chase mini-game**~~ — **done.** The builder's **Play! 🐭** button drops
+   your finished cat into the hill scene; tap the roaming mouse before it scurries
+   off and your cat pounces (30-second round, catch counter). The cat is rendered
+   with the same code as the builder, so its color stays inside the lines in-game.
 4. **Clan life** — assign roles, mentor/apprentice pairs (she listed both roles!),
    simple story scenes using her camp background.
 5. **More art slots** — the manifest accepts new ears/eyes/tails/patterns/scenes

@@ -76,6 +76,28 @@
     border-radius: 999px; cursor: pointer; background: #4d6c33; color: #fff;
   }
   .actions #save { background: var(--accent); }
+  .actions #play { background: #58d11c; box-shadow: 0 4px 0 #3d9510; }
+  /* ---------- Play (prey-chase mini-game) ---------- */
+  #play { display: none; min-height: 100vh; padding: 12px; max-width: 1100px; margin: 0 auto;
+          flex-direction: column; align-items: center; gap: 10px; }
+  #play.on { display: flex; }
+  #hud { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  #hud span { background: var(--panel); border-radius: 999px; padding: 10px 20px; font-size: 24px; }
+  #hud #quit { font-family: inherit; font-size: 17px; padding: 10px 20px; border: none;
+               border-radius: 999px; cursor: pointer; background: #4d6c33; color: #fff; }
+  #game { width: 100%; background: var(--panel); border-radius: var(--radius);
+          display: block; touch-action: manipulation; cursor: pointer; }
+  #hint { color: #cfe3b8; font-size: 16px; margin: 0; text-align: center; }
+  #over { display: none; position: fixed; inset: 0; background: rgba(20,30,12,.72);
+          align-items: center; justify-content: center; padding: 24px; }
+  #over.on { display: flex; }
+  #over .card { background: var(--panel); border-radius: var(--radius); padding: 26px 30px;
+                text-align: center; max-width: 420px; }
+  #over h2 { margin: 0 0 6px; font-size: 34px; }
+  #over p { margin: 0 0 16px; font-size: 20px; }
+  #over button { font-family: inherit; font-size: 18px; padding: 12px 22px; border: none;
+                 border-radius: 999px; cursor: pointer; background: var(--accent); color: #fff; }
+  #over #tobuilder { background: #4d6c33; }
 </style>
 </head>
 <body>
@@ -109,8 +131,29 @@
     <h3>Scene</h3><div class="grid" id="scenes"></div>
     <div class="actions">
       <button id="random">Surprise me!</button>
+      <button id="play">Play! 🐭</button>
       <button id="save">Save my cat</button>
       <button id="back">Title</button>
+    </div>
+  </div>
+</div>
+
+<div id="play">
+  <div id="hud">
+    <span id="score">🐭 0</span>
+    <span id="clock">⏱ 30</span>
+    <button id="quit">Done</button>
+  </div>
+  <canvas id="game" width="1366" height="1024"></canvas>
+  <p id="hint">Tap the mouse before it scurries away — your cat will pounce!</p>
+  <div id="over">
+    <div class="card">
+      <h2 id="overtitle">Time!</h2>
+      <p id="overscore">You caught 0 mice!</p>
+      <div class="actions" style="justify-content:center">
+        <button id="again">Play again</button>
+        <button id="tobuilder">Back to my cat</button>
+      </div>
     </div>
   </div>
 </div>
@@ -239,16 +282,10 @@ function bodyPath(x) {  // draws the sitting-cat silhouette into ctx x
   x.closePath(); x.fill();
 }
 
-async function draw() {
-  const cv = document.getElementById("stage"), ctx = cv.getContext("2d");
-  const W = cv.width, H = cv.height;
-  // background
-  const bg = M.backgrounds.find(b => b.id === state.scene);
-  ctx.clearRect(0, 0, W, H);
-  if (bg) ctx.drawImage(await load(bg.src), 0, 0, W, H);
-  else { ctx.fillStyle = "#bfe3f7"; ctx.fillRect(0, 0, W, H); }
-
-  // --- cat group (horizontally scalable) ---
+// Build the cat as a transparent sprite (1366×1024) — reused by the builder
+// preview and the play mode, so the color stays inside the lines everywhere.
+async function buildCat() {
+  const W = 1366, H = 1024;
   const cat = document.createElement("canvas"); cat.width = W; cat.height = H;
   const c = cat.getContext("2d");
 
@@ -256,7 +293,6 @@ async function draw() {
   if (state.tail) {
     const t = M.categories.tail.find(p => p.id === state.tail);
     const img = await load(t.src);
-    const tail = tinted(img, "#000", W, H);          // line art stays dark
     c.save(); c.translate(t.offset[0], t.offset[1]);
     c.drawImage(img, 0, 0, W, H); c.restore();
   }
@@ -293,7 +329,20 @@ async function draw() {
     const p = M.categories[k].find(q => q.id === state[k]);
     c.drawImage(await load(p.src), 0, 0, W, H);
   }
-  // composite cat with width scaling around its center
+  return cat;
+}
+
+async function draw() {
+  const cv = document.getElementById("stage"), ctx = cv.getContext("2d");
+  const W = cv.width, H = cv.height;
+  // background
+  const bg = M.backgrounds.find(b => b.id === state.scene);
+  ctx.clearRect(0, 0, W, H);
+  if (bg) ctx.drawImage(await load(bg.src), 0, 0, W, H);
+  else { ctx.fillStyle = "#bfe3f7"; ctx.fillRect(0, 0, W, H); }
+
+  // cat, composited with width scaling around its center
+  const cat = await buildCat();
   ctx.save();
   ctx.translate(650 * (1 - state.width), 0);
   ctx.scale(state.width, 1);
@@ -354,6 +403,131 @@ document.getElementById("save").onclick = async () => {
   a.href = document.getElementById("stage").toDataURL("image/png");
   a.click();
 };
+
+// ---------- Play: prey-chase mini-game ----------
+const GW = 1366, GH = 1024, ROUND_MS = 30000, CATCH_R = 95;
+const gcv = document.getElementById("game"), gctx = gcv.getContext("2d");
+const game = {
+  running: false, raf: 0, score: 0, endAt: 0, last: 0,
+  cat: null, bg: null, catScale: 0.62, catX: 20, catY: 0, cw: 0, ch: 0,
+  mouse: { x: 0, y: 0, tx: 0, ty: 0, retargetAt: 0 },
+  pounce: { active: false, start: 0, tx: 0 }
+};
+const rand = (a, b) => a + Math.random() * (b - a);
+const MFIELD = { x0: 660, x1: 1250, y0: 470, y1: 900 };
+
+function retargetMouse(now) {
+  game.mouse.tx = rand(MFIELD.x0, MFIELD.x1);
+  game.mouse.ty = rand(MFIELD.y0, MFIELD.y1);
+  game.mouse.retargetAt = now + rand(700, 1500);
+}
+function spawnMouse(now) {
+  game.mouse.x = rand(MFIELD.x0, MFIELD.x1);
+  game.mouse.y = rand(MFIELD.y0, MFIELD.y1);
+  retargetMouse(now);
+}
+function drawMouse(g, x, y, s) {
+  g.save(); g.translate(x, y); g.scale(s, s);
+  g.strokeStyle = "#8a7d6b"; g.lineWidth = 7; g.lineCap = "round";
+  g.beginPath(); g.moveTo(34, 8); g.quadraticCurveTo(84, 16, 76, -26); g.stroke();
+  g.fillStyle = "#9b8f80";
+  g.beginPath(); g.ellipse(0, 0, 44, 30, 0, 0, Math.PI * 2); g.fill();      // body
+  g.beginPath(); g.ellipse(-36, -6, 24, 21, 0, 0, Math.PI * 2); g.fill();   // head
+  g.beginPath(); g.ellipse(-44, -28, 14, 14, 0, 0, Math.PI * 2);            // ears
+  g.ellipse(-22, -30, 14, 14, 0, 0, Math.PI * 2); g.fill();
+  g.fillStyle = "#d7a6b2";
+  g.beginPath(); g.ellipse(-44, -28, 7, 7, 0, 0, Math.PI * 2);
+  g.ellipse(-22, -30, 7, 7, 0, 0, Math.PI * 2); g.fill();
+  g.fillStyle = "#222"; g.beginPath(); g.ellipse(-45, -6, 4, 4, 0, 0, Math.PI * 2); g.fill(); // eye
+  g.fillStyle = "#e0708a"; g.beginPath(); g.ellipse(-58, -2, 5, 4, 0, 0, Math.PI * 2); g.fill(); // nose
+  g.restore();
+}
+
+function gameFrame(now) {
+  if (!game.running) return;
+  if (!game.last) game.last = now;
+  const dt = Math.min(50, now - game.last); game.last = now;
+  const remain = Math.max(0, game.endAt - now);
+  document.getElementById("clock").textContent = "⏱ " + Math.ceil(remain / 1000);
+  if (remain <= 0) return endGame();
+
+  // mouse scurries toward its target, picking a new one now and then
+  if (now >= game.mouse.retargetAt) retargetMouse(now);
+  const m = game.mouse, dx = m.tx - m.x, dy = m.ty - m.y, d = Math.hypot(dx, dy) || 1;
+  const step = 0.34 * dt;
+  if (d > step) { m.x += dx / d * step; m.y += dy / d * step; }
+
+  gctx.clearRect(0, 0, GW, GH);
+  if (game.bg) gctx.drawImage(game.bg, 0, 0, GW, GH);
+  else { gctx.fillStyle = "#bfe3f7"; gctx.fillRect(0, 0, GW, GH); }
+
+  // cat (with a little pounce hop toward the last mouse caught)
+  let px = 0, py = 0;
+  if (game.pounce.active) {
+    const t = (now - game.pounce.start) / 380;
+    if (t >= 1) game.pounce.active = false;
+    else {
+      const k = Math.sin(t * Math.PI), headX = game.catX + 665 * game.catScale;
+      px = Math.max(-150, Math.min(190, game.pounce.tx - headX)) * 0.5 * k;
+      py = -90 * k;
+    }
+  }
+  gctx.drawImage(game.cat, game.catX + px, game.catY + py, game.cw, game.ch);
+  drawMouse(gctx, m.x, m.y, 1.3);
+  game.raf = requestAnimationFrame(gameFrame);
+}
+
+async function startGame() {
+  document.getElementById("title").style.display = "none";
+  document.getElementById("builder").classList.remove("on");
+  document.getElementById("over").classList.remove("on");
+  document.getElementById("play").classList.add("on");
+  game.cat = await buildCat();
+  const bg = M.backgrounds.find(b => b.id === "hill_mouse") || M.backgrounds[0];
+  game.bg = bg ? await load(bg.src) : null;
+  game.cw = GW * game.catScale; game.ch = GH * game.catScale;
+  game.catY = GH - game.ch;
+  game.score = 0;
+  document.getElementById("score").textContent = "🐭 0";
+  const now = performance.now();
+  game.endAt = now + ROUND_MS; game.last = 0; game.pounce.active = false;
+  spawnMouse(now);
+  game.running = true;
+  game.raf = requestAnimationFrame(gameFrame);
+}
+function stopGame() { game.running = false; cancelAnimationFrame(game.raf); }
+function endGame() {
+  stopGame();
+  document.getElementById("clock").textContent = "⏱ 0";
+  document.getElementById("overscore").textContent =
+    "You caught " + game.score + (game.score === 1 ? " mouse!" : " mice!");
+  document.getElementById("over").classList.add("on");
+}
+function toBuilder() {
+  stopGame();
+  document.getElementById("over").classList.remove("on");
+  document.getElementById("play").classList.remove("on");
+  document.getElementById("builder").classList.add("on");
+  draw();
+}
+
+gcv.addEventListener("pointerdown", e => {
+  if (!game.running) return;
+  const r = gcv.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width * GW;
+  const y = (e.clientY - r.top) / r.height * GH;
+  const m = game.mouse;
+  if (Math.hypot(x - m.x, y - m.y) <= CATCH_R) {
+    game.score++;
+    document.getElementById("score").textContent = "🐭 " + game.score;
+    game.pounce = { active: true, start: performance.now(), tx: m.x };
+    spawnMouse(performance.now());
+  }
+});
+document.getElementById("play").onclick = startGame;
+document.getElementById("quit").onclick = toBuilder;
+document.getElementById("again").onclick = startGame;
+document.getElementById("tobuilder").onclick = toBuilder;
 
 boot();
 </script>
